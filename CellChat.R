@@ -4,7 +4,7 @@ library(dplyr)
 library(Seurat)
 library(patchwork)
 library(data.table)
-install.packages("Seurat")
+#install.packages("Seurat")
 
 #============
 # Load the cellchat.data dataset
