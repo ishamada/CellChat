@@ -57,7 +57,7 @@ cellchat <- identifyOverExpressedInteractions(cellchat)
 
 # project gene expression data onto PPI (Optional: when running it, USER should set `raw.use = FALSE` in the function `computeCommunProb()` in order to use the projected data)
 cellchat <- projectData(cellchat, PPI.human)
-
+# Test
 
 
 
