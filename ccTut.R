@@ -59,6 +59,23 @@ cellchat <- identifyOverExpressedInteractions(cellchat)
 cellchat <- projectData(cellchat, PPI.human)
 # Test
 
+cellchat <- computeCommunProb(cellchat)
+
+# Filter out the cell-cell communication if there are only few number of cells in certain cell groups
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+
+df.net <- subsetCommunication(cellchat)
+
+cellchat <- computeCommunProbPathway(cellchat)
+
+cellchat <- aggregateNet(cellchat)
+
+cellchat
+
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T,  label.edge= T, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
 
 
 
