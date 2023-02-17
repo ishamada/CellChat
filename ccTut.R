@@ -2,6 +2,14 @@
 library(CellChat)
 library(patchwork)
 options(stringsAsFactors = FALSE)
+# options(
+#   repos = c(
+#     igraph = 'https://igraph.r-universe.dev',
+#     CRAN = 'https://cloud.r-project.org'
+#   )
+#)
+
+#install.packages('igraph','1.3.5')
 
 
 # Here we load a scRNA-seq data matrix and its associated cell meta data
@@ -57,7 +65,6 @@ cellchat <- identifyOverExpressedInteractions(cellchat)
 
 # project gene expression data onto PPI (Optional: when running it, USER should set `raw.use = FALSE` in the function `computeCommunProb()` in order to use the projected data)
 cellchat <- projectData(cellchat, PPI.human)
-# Test
 
 cellchat <- computeCommunProb(cellchat)
 
@@ -76,6 +83,18 @@ groupSize <- as.numeric(table(cellchat@idents))
 par(mfrow = c(1,2), xpd=TRUE)
 netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T,  label.edge= T, title.name = "Number of interactions")
 netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
