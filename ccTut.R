@@ -9,6 +9,8 @@ options(stringsAsFactors = FALSE)
 #   )
 #)
 
+# run this command on ternimal
+# conda install gfortran_linux-64
 #install.packages('igraph','1.3.5')
 
 
