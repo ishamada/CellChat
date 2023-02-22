@@ -1,33 +1,17 @@
-
-# options(
-#   repos = c(
-#     igraph = 'https://igraph.r-universe.dev',
-#     CRAN = 'https://cloud.r-project.org'
-#   )
-#)
-
 # run this command on ternimal
 # conda install gfortran_linux-64
-#install.packages('igraph','1.3.5')
+# install.packages('igraph','1.3.5')
 
 # # Load the methods package
 # library(methods)
-# 
-# # Create a data.frame
-# my_df <- data.frame(a = 1:3, b = letters[1:3])
-# 
-# # Define a new S4 class
-# setClass("my_class", slots = c(a = "numeric", b = "character"))
-# 
-# # Define a constructor method
-# setMethod("initialize", "my_class", function(.Object, a, b) {
-#   .Object@a <- a
-#   .Object@b <- b
-#   .Object
-# })
-# 
-# # Create a new instance of the class and initialize it with the data.frame
-# my_obj <- new("my_class", a = my_df$a, b = my_df$b)
+
+library(data.table)
+
+# log(as.matrix(CellChat::normalizeData(testobject@assays$RNA[1:5,1:2])) + 1)
+
+#load(url("https://ndownloader.figshare.com/files/25950872")) # This is a combined data from two biological conditions: normal and diseases
+#data.input = data_humanSkin$data # normalized data matrix
+
 
 library(doParallel)
 detectCores()
@@ -35,24 +19,16 @@ registerDoParallel(cores = 4)
 
 future::plan("multiprocess", workers = 4) # do parallel
 
-library(dplyr)
-library(Seurat)
-library(patchwork)
-library(data.table)
-
 #Sys.sleep(2)
 
 # Load the scdata dataset
-df.data <- read.table("scrdatafile.txt")
-
-#tdf <- transpose(df.data)
-
-#length(table(tdf[,2]))
+df.data <- read.table("~/mel-data/scrdatafile.txt")
 
 #Sys.sleep(2)
 #transpose data frame
 df.data <- transpose(df.data)
-Sys.sleep(2)
+
+#Sys.sleep(2)
 
 # data preparation 
 #========================
@@ -71,12 +47,12 @@ orgdata.data <- df.data
 # subset tumor number 79
 mel79.data <- df.data[which(df.data[,1] == "79"),]
 
-which(mel79.data$`malignant(1=no,2=yes,0=unresolved)` == 2)
+# which(mel79.data$`malignant(1=no,2=yes,0=unresolved)` == 2)
 
 # set 7 to malignant cells
 mel79.data[which(mel79.data$`malignant(1=no,2=yes,0=unresolved)` == 2),3] = 7
 
-which(mel79.data$`malignant(1=no,2=yes,0=unresolved)` == 0 & mel79.data$`non-malignant cell type (1=T,2=B,3=Macro.4=Endo.,5=CAF;6=NK)` == 0)
+# which(mel79.data$`malignant(1=no,2=yes,0=unresolved)` == 0 & mel79.data$`non-malignant cell type (1=T,2=B,3=Macro.4=Endo.,5=CAF;6=NK)` == 0)
 
 # set 9 to unresolved cells
 mel79.data[which(mel79.data$`malignant(1=no,2=yes,0=unresolved)` == 0 & mel79.data$`non-malignant cell type (1=T,2=B,3=Macro.4=Endo.,5=CAF;6=NK)` == 0) , 3] = 9
@@ -112,46 +88,40 @@ mel79.data[which(mel79.data$`non-malignant cell type (1=T,2=B,3=Macro.4=Endo.,5=
 
 mel79.data[which(mel79.data$`non-malignant cell type (1=T,2=B,3=Macro.4=Endo.,5=CAF;6=NK)` == 9),1] = "Urslvd" 
 
-backupmel79 <- mel79.data
+# create meta data frame
+df <- data.frame(rownames(mel79.data),  mel79.data[,1])
 
-my_df <- data.frame(rownames(mel79.data),  mel79.data[,1])
+row.names(df) <-  df[,1]
 
-row.names(my_df) <-  my_df[,1]
+colnames(df)[2]  <- "labels"
 
-colnames(my_df)[2]  <- "labels"
+mel79.metadata <- subset(df, select = c("labels"))
 
-my_df <- subset(my_df, select = c("labels"))
-
-mel.meta <- my_df
 
 # drop metadata column
 mel79.data <- mel79.data[,-1] # normalized data matrix
 
-# Initialize the Seurat object with the raw (non-normalized data).
-#pbmc <- CreateSeuratObject(counts =  t(mal.data), project = "Mel1k", min.cells = 3, min.features = 10)
+# make a backup data
+mel79.ready <- mel79.data
 
-#data.input = data_humanSkin$data 
-#meta = data_humanSkin$meta # a dataframe with rownames containing cell mata data
-#cell.use = rownames(meta)[meta$condition == "LS"] # extract the cell names from disease data
-
-# Prepare input data for CelChat analysis
-#data.input = data.input[, cell.use]
-#meta = meta[cell.use, ]
-# meta = data.frame(labels = meta$labels[cell.use], row.names = colnames(data.input)) # manually create a dataframe consisting of the cell labels
-unique(meta$labels) # check the cell labels
+unique(mel79.metadata$labels) # check the cell labels
 
 library(CellChat)
 library(patchwork)
 options(stringsAsFactors = FALSE)
+library(dplyr)
+library(Seurat)
 
 # Initialize the Seurat object with the raw (non-normalized data).
-testobject <- CreateSeuratObject(counts =  t(mel79.data), project = "mel79", min.cells = 3, min.features = 10)
+seurat.mel79data <- CreateSeuratObject(counts =  t(mel79.data), project = "mel79", min.cells = 3, min.features = 10)
+
+# seurat.mel79data <- SCTransform(seurat.mel79data,assay = "RNA",new.assay.name = "SCT")
 
 # Create a CellChat object
-cellchat <- createCellChat(object = testobject, meta = mel.meta, group.by = "labels")
+cellchat <- createCellChat(object = seurat.mel79data, meta = mel79.metadata, group.by = "labels")
 
 
-cellchat <- addMeta(cellchat, meta = mel.meta)
+cellchat <- addMeta(cellchat, meta = mel79.metadata)
 cellchat <- setIdent(cellchat, ident.use = "labels") # set "labels" as default cell identity
 levels(cellchat@idents) # show factor levels of the cell labels
 groupSize <- as.numeric(table(cellchat@idents)) # number of cells in each cell group
@@ -172,12 +142,6 @@ cellchat@DB <- CellChatDB.use
 
 # subset the expression data of signaling genes for saving computation cost
 cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
-
-library(doParallel)
-detectCores()
-registerDoParallel(cores = 4)
-
-future::plan("multiprocess", workers = 4) # do parallel
 
 cellchat <- identifyOverExpressedGenes(cellchat)
 cellchat <- identifyOverExpressedInteractions(cellchat)
